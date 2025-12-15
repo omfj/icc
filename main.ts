@@ -36,7 +36,8 @@ console.log(
   `[${new Date().toISOString()}] Running ID card availability check...`
 );
 
-const availableSlots: { place: string; dates: string[] }[] = [];
+const availableSlots: { place: string; placeId: string; dates: string[] }[] =
+  [];
 
 for (const place of places.filter((p) => p.enabled)) {
   const data = await politiApi.getDates(place.id);
@@ -49,6 +50,7 @@ for (const place of places.filter((p) => p.enabled)) {
   if (upcomingDates.length > 0) {
     availableSlots.push({
       place: place.name,
+      placeId: place.id,
       dates: upcomingDates,
     });
   }
@@ -56,12 +58,22 @@ for (const place of places.filter((p) => p.enabled)) {
 
 // Send email if any available slots were found
 if (availableSlots.length > 0) {
-  const emailBody = availableSlots
-    .map((slot) => {
-      const dateList = slot.dates.map((d) => `  - ${d}`).join("\n");
-      return `${slot.place}:\n${dateList}`;
-    })
-    .join("\n\n");
+  // Fetch times for each date
+  const emailBodyParts = [];
+
+  for (const slot of availableSlots) {
+    const dateLines = [];
+
+    for (const date of slot.dates) {
+      const times = await politiApi.getTimes(slot.placeId, date);
+      const timesList = times.map((t) => t.time).join(", ");
+      dateLines.push(`  - ${date} (${timesList})`);
+    }
+
+    emailBodyParts.push(`${slot.place}:\n${dateLines.join("\n")}`);
+  }
+
+  const emailBody = emailBodyParts.join("\n\n");
 
   console.log("📧 Ledige timer funnet! Sender e-post...");
 
