@@ -32,52 +32,49 @@ function isWithinNextWeek(dateStr: string): boolean {
   return date >= now && date <= oneWeekFromNow;
 }
 
-// Run every 10 minutes
-Deno.cron("Check ID card availability", "*/10 * * * *", async () => {
-  console.log(
-    `[${new Date().toISOString()}] Running ID card availability check...`
-  );
+console.log(
+  `[${new Date().toISOString()}] Running ID card availability check...`
+);
 
-  const availableSlots: { place: string; dates: string[] }[] = [];
+const availableSlots: { place: string; dates: string[] }[] = [];
 
-  for (const place of places.filter((p) => p.enabled)) {
-    const data = await politiApi.getDates(place.id);
+for (const place of places.filter((p) => p.enabled)) {
+  const data = await politiApi.getDates(place.id);
 
-    // Filter dates that are within the next week and have available times
-    const upcomingDates = data
-      .filter((d) => isWithinNextWeek(d.date))
-      .map((d) => d.date);
+  // Filter dates that are within the next week and have available times
+  const upcomingDates = data
+    .filter((d) => isWithinNextWeek(d.date))
+    .map((d) => d.date);
 
-    if (upcomingDates.length > 0) {
-      availableSlots.push({
-        place: place.name,
-        dates: upcomingDates,
-      });
-    }
+  if (upcomingDates.length > 0) {
+    availableSlots.push({
+      place: place.name,
+      dates: upcomingDates,
+    });
   }
+}
 
-  // Send email if any available slots were found
-  if (availableSlots.length > 0) {
-    const emailBody = availableSlots
-      .map((slot) => {
-        const dateList = slot.dates.map((d) => `  - ${d}`).join("\n");
-        return `${slot.place}:\n${dateList}`;
-      })
-      .join("\n\n");
+// Send email if any available slots were found
+if (availableSlots.length > 0) {
+  const emailBody = availableSlots
+    .map((slot) => {
+      const dateList = slot.dates.map((d) => `  - ${d}`).join("\n");
+      return `${slot.place}:\n${dateList}`;
+    })
+    .join("\n\n");
 
-    console.log("📧 Ledige timer funnet! Sender e-post...");
+  console.log("📧 Ledige timer funnet! Sender e-post...");
 
-    try {
-      await emailService.sendEmail({
-        subject: "🎉 Ledig time for ID-kort!",
-        body: `Ledige timer for ID-kort funnet i løpet av neste uke:\n\n${emailBody}\n\nBestill nå på: https://pass-og-id.politiet.no/timebestilling/`,
-      });
-    } catch (error) {
-      console.error("Kunne ikke sende e-post:", error);
-    }
-  } else {
-    console.log("Ingen ledige timer funnet i løpet av neste uke.");
+  try {
+    await emailService.sendEmail({
+      subject: "🎉 Ledig time for ID-kort!",
+      body: `Ledige timer for ID-kort funnet i løpet av neste uke:\n\n${emailBody}\n\nBestill nå på: https://pass-og-id.politiet.no/timebestilling/`,
+    });
+  } catch (error) {
+    console.error("Kunne ikke sende e-post:", error);
   }
+} else {
+  console.log("Ingen ledige timer funnet i løpet av neste uke.");
+}
 
-  console.log("Check completed!");
-});
+console.log("Check completed!");
