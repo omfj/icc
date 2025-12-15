@@ -1,5 +1,6 @@
 {
   "tasks": {
+    "dev": "deno run -A --unstable-cron main.ts",
     "start": "deno run -A --unstable-cron --env-file=.env main.ts"
   },
   "imports": {
