@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "start": "deno run -A --unstable-cron --env-file=.env main.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+    "@aws-sdk/client-ses": "npm:@aws-sdk/client-ses@3"
+  }
+}
