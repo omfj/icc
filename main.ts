@@ -1,5 +1,6 @@
 import { politiApi } from "./politi-api.ts";
 import { emailService } from "./email.ts";
+import { buildAvailabilityEmailBody } from "./views.ts";
 
 const places = [
   {
@@ -58,29 +59,14 @@ for (const place of places.filter((p) => p.enabled)) {
 
 // Send email if any available slots were found
 if (availableSlots.length > 0) {
-  // Fetch times for each date
-  const emailBodyParts = [];
-
-  for (const slot of availableSlots) {
-    const dateLines = [];
-
-    for (const date of slot.dates) {
-      const times = await politiApi.getTimes(slot.placeId, date);
-      const timesList = times.map((t) => t.time).join(", ");
-      dateLines.push(`  - ${date} (${timesList})`);
-    }
-
-    emailBodyParts.push(`${slot.place}:\n${dateLines.join("\n")}`);
-  }
-
-  const emailBody = emailBodyParts.join("\n\n");
-
   console.log("📧 Ledige timer funnet! Sender e-post...");
 
   try {
+    const emailBody = await buildAvailabilityEmailBody(availableSlots);
+
     await emailService.sendEmail({
       subject: "🎉 Ledig time for ID-kort!",
-      body: `Ledige timer for ID-kort funnet i løpet av neste uke:\n\n${emailBody}\n\nBestill nå på: https://pass-og-id.politiet.no/timebestilling/`,
+      body: emailBody,
     });
   } catch (error) {
     console.error("Kunne ikke sende e-post:", error);
