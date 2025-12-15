@@ -72,9 +72,12 @@ if (availableSlots.length > 0) {
     });
   } catch (error) {
     console.error("Kunne ikke sende e-post:", error);
+    Deno.exit(1);
   }
 } else {
   console.log("Ingen ledige timer funnet i løpet av neste uke.");
 }
 
 console.log("Check completed!");
+
+Deno.exit(0);
